@@ -5,36 +5,26 @@
 (enable-console-print!)
 
 (def app-state
-  (atom {:intervals [{:desc "5x100@3:00"}
-                     {:desc "1x200@6:00"}]}))
-
-(re-find #"x(\d+)@" "1x200@6:00")
-
-(js/parseInt (second (re-find #"^(\d+)x" "45x200@6:00")))
+  (atom {:intervals [(parse-interval-string "5x100@3:00")
+                     (parse-interval-string "1x200@6:00")]}))
 
 (defn parse-interval-string [interval-string]
   (let [[_ num-s dist-s min-s sec-s] (re-matches #"^(\d+)x(\d+)@(\d+):(\d+)$" interval-string)
         num (js/parseInt (second (re-find #"^(\d+)x" interval-string)))
         dist (js/parseInt (second (re-find #"x(\d+)@" interval-string)))
-        min (js/parseInt (second (re-find #"POOP" interval-string)))
-        sec (js/parseInt (second (re-find #"POOP" interval-string)))
+        min (js/parseInt (second (re-find #"@(\d+):" interval-string)))
+        sec (js/parseInt (second (re-find #":(\d+)$" interval-string)))
         total-sec (+ (* 60 min) sec)]
     {:num num
      :dist dist
-     :time sec
+     :time total-sec
      :desc interval-string}))
 
-(parse-interval-string "7x100@3:00")
-
-
-(defn interval-view [interval owner]
+(defn interval-view [i owner]
   (reify
-    om/IInitState
-    (init-state [_]
-      {:num 0 :dist 0 :time sec :desc ""})
     om/IRender
     (render [_]
-      (dom/li nil (:desc interval)))))
+      (dom/li nil (str (:num i) " x " (:dist i) " @ " (:time i))))))
 
 (defn create-interval [intervals owner]
   (let [new-interval-string-el (om/get-node owner "new-interval")
@@ -55,7 +45,8 @@
     (render-state [_ {:keys [new-interval]}]
       (dom/div #js {:id "add-interval"}
         (dom/div nil
-          (dom/input #js {:ref "new-interval"})
+          (dom/input
+            #js {:ref "new-interval"})
           (dom/button
             #js {:onClick (fn [e] (create-interval intervals owner))}
             "Save"))
