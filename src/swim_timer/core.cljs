@@ -4,21 +4,28 @@
 
 (enable-console-print!)
 
-(def app-state
-  (atom {:intervals [(parse-interval-string "5x100@3:00")
-                     (parse-interval-string "1x200@6:00")]}))
+(defn extract-int [s regex]
+  (if-let [num-str (second (re-find regex s))]
+    (js/parseInt num-str)))
 
 (defn parse-interval-string [interval-string]
   (let [[_ num-s dist-s min-s sec-s] (re-matches #"^(\d+)x(\d+)@(\d+):(\d+)$" interval-string)
-        num (js/parseInt (second (re-find #"^(\d+)x" interval-string)))
-        dist (js/parseInt (second (re-find #"x(\d+)@" interval-string)))
-        min (js/parseInt (second (re-find #"@(\d+):" interval-string)))
-        sec (js/parseInt (second (re-find #":(\d+)$" interval-string)))
-        total-sec (+ (* 60 min) sec)]
+        num  (extract-int interval-string #"^(\d+)x")
+        dist (extract-int interval-string #"x(\d+)@")
+        min  (extract-int interval-string #"@(\d+):")
+        sec  (extract-int interval-string #":(\d+)$")
+        total-sec (and min sec (+ (* 60 min) sec))]
     {:num num
      :dist dist
      :time total-sec
      :desc interval-string}))
+
+(defn validate-interval [{:keys [num dist time] :as i}]
+  (and num dist time))
+
+(def app-state
+  (atom {:intervals [(parse-interval-string "5x100@3:00")
+                     (parse-interval-string "1x200@6:00")]}))
 
 (defn interval-view [i owner]
   (reify
