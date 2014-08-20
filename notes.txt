@@ -1,0 +1,22 @@
+
+---------2014-08-18----------------------
+Trying to figure out how to react to changing text in the text box
+- live preview of the parsed object
+- validation to prevent saving if it's not in the right form
+
+Comparing to om_async editable class - https://github.com/swannodette/om/wiki/Intermediate-Tutorial
+
+defn editable [data owner {:keys [edit-key] :as opts}]
+- called by classes-view
+- for each class in the data
+-- (om/build editable class {:opts {:edit-key :class/title}})
+-- om/build
+    - f - fn that returns an instance of IRender or IRenderState
+        - must take 2 args - cursor, owner
+        - can take a 3rd arg if :opts is specified in m
+    - cursor - Om cursor into application state
+    - m - optional map of options
+
+- I think the difference is that editable there is using an om component, so the data param is to an om data cursor. In this case, the contents of the textbox are local state, and this component will never store application state, only create intervals once validated
+
+ANSWER: This was right, but I was using om/transact!, which didn't work on local component state. The correct way was to  call om/set-state!

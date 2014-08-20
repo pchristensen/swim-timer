@@ -44,21 +44,23 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:new-interval {:num 0
-                      :dist 0
-                      :time 0
-                      :desc ""}})
+      {:text "poo"})
     om/IRenderState
-    (render-state [_ {:keys [new-interval]}]
-      (dom/div #js {:id "add-interval"}
-        (dom/div nil
-          (dom/input
-            #js {:ref "new-interval"})
-          (dom/button
-            #js {:onClick (fn [e] (create-interval intervals owner))}
-            "Save"))
-        (dom/div #js {:id "add-interval-preview"}
-          (str (:num new-interval)))))))
+    (render-state [_ {:keys [text]}]
+      (let [new-interval (parse-interval-string text)]
+        (dom/div #js {:id "add-interval"}
+          (dom/div nil
+            (dom/input
+              #js {:ref "new-interval"
+                   :value text
+                   :onChange (fn [e]
+                               (om/set-state! owner [:text] (.. e -target -value)))})
+            (dom/button
+              #js {:disabled (not (validate-interval new-interval))
+                   :onClick (fn [e] (create-interval intervals owner))}
+              "Save"))
+          (dom/div #js {:id "add-interval-preview"}
+            (str text)))))))
 
 (defn app-view [app owner]
   (reify
