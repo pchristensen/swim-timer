@@ -36,9 +36,12 @@
 (defn create-interval [intervals owner]
   (let [new-interval-string-el (om/get-node owner "new-interval")
         new-interval-string (.-value new-interval-string-el)
-        new-interval (parse-interval-string new-interval-string)]
-    (om/transact! intervals [] #(conj % new-interval))
-    (set! (.-value new-interval-string-el) "")))
+        new-interval (parse-interval-string new-interval-string)
+        valid? (validate-interval new-interval)]
+    (if valid?
+      (do
+        (om/transact! intervals [] #(conj % new-interval))
+        (set! (.-value new-interval-string-el) "")))))
 
 (defn create-interval-view [intervals owner]
   (reify
@@ -59,7 +62,9 @@
               #js {:disabled (not (validate-interval new-interval))
                    :onClick (fn [e] (create-interval intervals owner))}
               "Save"))
-          (dom/div #js {:id "add-interval-preview"}
+          (dom/div #js {:id "instructions"}
+                   "Use format '<number of reps>x<distance>@<minutes>:<seconds>'")
+          (dom/div #js {:id "preview"}
             (str text)))))))
 
 (defn app-view [app owner]
