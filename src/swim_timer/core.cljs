@@ -31,7 +31,7 @@
   (reify
     om/IRender
     (render [_]
-      (dom/li nil (str (:num i) " x " (:dist i) " @ " (:time i))))))
+      (dom/li nil (str (:dist i) " @ " (:time i))))))
 
 (defn create-interval [intervals owner]
   (let [new-interval-string-el (om/get-node owner "new-interval")
@@ -47,7 +47,7 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:text "poo"})
+      {:text ""})
     om/IRenderState
     (render-state [_ {:keys [text]}]
       (let [new-interval (parse-interval-string text)]
@@ -74,11 +74,12 @@
       (dom/div nil
         (dom/h1 nil "Intervals")
         (om/build create-interval-view (:intervals app))
-        (apply dom/ul nil
-               (map
-                 (fn [i]
-                   (om/build interval-view i))
-                 (:intervals app)))))))
+        (apply dom/ul
+               nil
+               (om/build-all interval-view
+                             (flatten
+                               (map (fn [i] (repeat (:num i) i))
+                                    (:intervals app)))))))))
 
 (om/root
   app-view
