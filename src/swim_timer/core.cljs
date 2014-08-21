@@ -65,7 +65,11 @@
           (dom/div #js {:id "instructions"}
                    "Use format '<number of reps>x<distance>@<minutes>:<seconds>'")
           (dom/div #js {:id "preview"}
-            (str text)))))))
+            (str (get new-interval :num)
+                 " x "
+                 (get new-interval :dist)
+                 " @ "
+                 (get new-interval :time))))))))
 
 (defn app-view [app owner]
   (reify
