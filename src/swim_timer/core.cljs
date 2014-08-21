@@ -20,8 +20,6 @@
      :time total-sec
      :desc interval-string}))
 
-@app-state
-
 (defn validate-interval [{:keys [num dist time] :as i}]
   (and num dist time))
 
@@ -41,9 +39,11 @@
         valid? (validate-interval new-interval)]
     (if valid?
       (do
+;        (set! (.-value new-interval-string-el) "")
+        (om/set-state! owner [:text] "")
         (dotimes [n (:num new-interval)]
           (om/transact! intervals #(conj % (dissoc new-interval :num))))
-        (set! (.-value new-interval-string-el) "")))))
+        ))))
 
 (defn create-interval-view [intervals owner]
   (reify
