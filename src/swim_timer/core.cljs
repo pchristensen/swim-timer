@@ -20,12 +20,13 @@
      :time total-sec
      :desc interval-string}))
 
+@app-state
+
 (defn validate-interval [{:keys [num dist time] :as i}]
   (and num dist time))
 
 (def app-state
-  (atom {:intervals [(parse-interval-string "5x100@3:00")
-                     (parse-interval-string "1x200@6:00")]}))
+  (atom {:intervals []}))
 
 (defn interval-view [i owner]
   (reify
@@ -40,7 +41,8 @@
         valid? (validate-interval new-interval)]
     (if valid?
       (do
-        (om/transact! intervals [] #(conj % new-interval))
+        (dotimes [n (:num new-interval)]
+          (om/transact! intervals #(conj % (dissoc new-interval :num))))
         (set! (.-value new-interval-string-el) "")))))
 
 (defn create-interval-view [intervals owner]
@@ -81,9 +83,7 @@
         (apply dom/ul
                nil
                (om/build-all interval-view
-                             (flatten
-                               (map (fn [i] (repeat (:num i) i))
-                                    (:intervals app)))))))))
+                             (:intervals app)))))))
 
 (om/root
   app-view
