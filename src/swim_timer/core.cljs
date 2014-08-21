@@ -71,7 +71,9 @@
               #js {:ref "new-interval"
                    :value text
                    :onChange (fn [e]
-                               (om/set-state! owner [:text] (.. e -target -value)))})
+                               (om/set-state! owner [:text] (.. e -target -value)))
+                   :onKeyPress #(when (== (.-keyCode %) 13)
+                                  (create-interval intervals owner))})
             (dom/button
               #js {:disabled (not (validate-interval new-interval))
                    :onClick (fn [e] (create-interval intervals owner))}
