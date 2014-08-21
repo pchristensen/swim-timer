@@ -4,6 +4,11 @@
 
 (enable-console-print!)
 
+(def state-transitions
+  {:waiting :timing
+   :timing  :resting
+   :resting :complete})
+
 (defn extract-int [s regex]
   (if-let [num-str (second (re-find regex s))]
     (js/parseInt num-str)))
@@ -42,15 +47,18 @@
       (dom/li nil (str (:dist i) " @ " (:time i))))))
 
 (defn create-interval [intervals owner]
-  (let [new-interval-string-el (om/get-node owner "new-interval")
-        new-interval-string (.-value new-interval-string-el)
-        new-interval (parse-interval-string new-interval-string)
-        valid? (validate-interval new-interval)]
+  (let [interval-string-el (om/get-node owner "new-interval")
+        interval-string (.-value interval-string-el)
+        raw-interval (parse-interval-string interval-string)
+        valid? (validate-interval raw-interval)
+        num-to-create (:num raw-interval)
+        new-interval (assoc (dissoc raw-interval :num)
+                            :state :waiting)]
     (if valid?
       (do
         (om/set-state! owner [:text] "")
-        (dotimes [n (:num new-interval)]
-          (om/transact! intervals #(conj % (dissoc new-interval :num))))))))
+        (dotimes [n num-to-create]
+          (om/transact! intervals #(conj % new-interval)))))))
 
 (defn create-interval-view [{:keys [intervals current-time]} owner]
   (reify
