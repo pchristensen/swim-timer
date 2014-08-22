@@ -28,14 +28,6 @@
 (defn validate-interval [{:keys [num dist time] :as i}]
   (and num dist time))
 
-(defn get-time
-  "current time as a map"
-  []
-  (let [d (js/Date.)]
-    {:hours (.getHours d)
-     :minutes (.getMinutes d)
-     :seconds (.getSeconds d)}))
-
 (defn split-time [total-sec]
   (let [min (quot total-sec 60)
         sec (rem total-sec 60)]
@@ -49,7 +41,7 @@
 
 (def app-state
   (atom {:intervals []
-         :current-time (get-time)}))
+         :elapsed-seconds 0}))
 
 (defn interval-view [i owner]
   (reify
@@ -71,16 +63,11 @@
         (dotimes [n num-to-create]
           (om/transact! intervals #(conj % new-interval)))))))
 
-(defn create-interval-view [{:keys [intervals current-time]} owner]
+(defn create-interval-view [{:keys [intervals]} owner]
   (reify
     om/IInitState
     (init-state [_]
       {:text ""})
-    om/IWillMount
-    (will-mount [_]
-      (js/setInterval
-        (fn [] (om/update! current-time (get-time)))
-        1000))
     om/IRenderState
     (render-state [_ {:keys [text]}]
       (let [new-interval (parse-interval-string text)]
@@ -99,7 +86,6 @@
               "Save"))
           (dom/div #js {:id "instructions"}
                    "Use format '<number of reps>x<distance>@<minutes>:<seconds>'")
-          (println-str current-time)
           (dom/div #js {:id "preview"}
             (str (get new-interval :num)
                  " x "
