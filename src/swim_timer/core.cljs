@@ -36,6 +36,17 @@
      :minutes (.getMinutes d)
      :seconds (.getSeconds d)}))
 
+(defn split-time [total-sec]
+  (let [min (quot total-sec 60)
+        sec (rem total-sec 60)]
+    {:min min :sec sec}))
+
+(defn time-str [{:keys [min sec]}]
+  (str min
+       ":"
+       (if (< sec 10) "0") ; ghetto zero-padding for seconds
+       sec))
+
 (def app-state
   (atom {:intervals []
          :current-time (get-time)}))
@@ -44,7 +55,7 @@
   (reify
     om/IRender
     (render [_]
-      (dom/li nil (str (:dist i) " @ " (:time i))))))
+      (dom/li nil (str (:dist i) " @ " (time-str (split-time (:time i))) " - " (:state i))))))
 
 (defn create-interval [intervals owner]
   (let [interval-string-el (om/get-node owner "new-interval")
@@ -106,7 +117,10 @@
         (apply dom/ul
                nil
                (om/build-all interval-view
-                             (:intervals app)))))))
+                             (:intervals app)))
+        (let [total-sec (reduce + (map :time (:intervals app)))]
+          (dom/div #js {:id "total-time"}
+                  (str "Total time: " (time-str (split-time total-sec)))))))))
 
 (om/root
   app-view
