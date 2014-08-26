@@ -39,9 +39,22 @@
        (if (< sec 10) "0") ; ghetto zero-padding for seconds
        sec))
 
+(defn start-timer [app]
+  (om/update! app :timer-state :running)
+  (om/update! app :timer-id (js/setInterval
+                               (fn [] (om/transact! app :elapsed-seconds #(inc %)))
+                               1000)))
+
+(defn stop-timer [app]
+  (om/update! app :timer-state :stopped)
+  (js/clearInterval (:timer-id @app))
+  (om/update! app :timer-id nil))
+
 (def app-state
   (atom {:intervals []
-         :elapsed-seconds 0}))
+         :elapsed-seconds 0
+         :timer-id nil
+         :timer-state :stopped}))
 
 (defn interval-view [i owner]
   (reify
@@ -93,18 +106,29 @@
                  " @ "
                  (get new-interval :time))))))))
 
-(defn app-view [app owner]
+(defn app-view [{:keys [intervals timer-state] :as app} owner]
   (reify
     om/IRender
     (render [_]
       (dom/div nil
         (dom/h1 nil "Intervals")
+        (dom/h3 nil (str "Timer ID: " (:timer-id app)))
+        (dom/h3 nil (str "Elapsed seconds: " (:elapsed-seconds app)))
         (om/build create-interval-view app)
+        (dom/div #js {:id "start-stop"}
+          (dom/button
+            #js {:disabled (not= :stopped timer-state)
+                 :onClick (fn [e] (start-timer app))}
+            "Start")
+          (dom/button
+            #js {:disabled (= :stopped (:timer-state app))
+                 :onClick (fn [e] (stop-timer app))}
+            "Stop"))
         (apply dom/ul
                nil
                (om/build-all interval-view
-                             (:intervals app)))
-        (let [total-sec (reduce + (map :time (:intervals app)))]
+                             intervals))
+        (let [total-sec (reduce + (map :time intervals))]
           (dom/div #js {:id "total-time"}
                   (str "Total time: " (time-str (split-time total-sec)))))))))
 
