@@ -60,7 +60,12 @@
   (reify
     om/IRender
     (render [_]
-      (dom/li nil (str (:dist i) " @ " (time-str (split-time (:time i))) " - " (:state i))))))
+      (dom/li #js {:class "interval"}
+        (dom/ul nil
+                (dom/li nil (str (:dist i) " @ " (time-str (split-time (:time i)))))
+                (dom/li nil (str (:state i)))
+                (dom/li nil (str "Start Time: " (:started-at i)))
+                (dom/li nil (str "End Time: " (:finished-at i))))))))
 
 (defn create-interval [intervals owner]
   (let [interval-string-el (om/get-node owner "new-interval")
@@ -69,7 +74,9 @@
         valid? (validate-interval raw-interval)
         num-to-create (:num raw-interval)
         new-interval (assoc (dissoc raw-interval :num)
-                            :state :waiting)]
+                            :state :waiting
+                            :started-at nil
+                            :finished-at nil)]
     (if valid?
       (do
         (om/set-state! owner [:text] "")
@@ -112,8 +119,6 @@
     (render [_]
       (dom/div nil
         (dom/h1 nil "Intervals")
-        (dom/h3 nil (str "Timer ID: " (:timer-id app)))
-        (dom/h3 nil (str "Elapsed seconds: " (:elapsed-seconds app)))
         (om/build create-interval-view app)
         (dom/div #js {:id "start-stop"}
           (dom/button
@@ -124,6 +129,7 @@
             #js {:disabled (= :stopped (:timer-state app))
                  :onClick (fn [e] (stop-timer app))}
             "Stop"))
+        (dom/h3 nil (str "Elapsed seconds: " (:elapsed-seconds app)))
         (apply dom/ul
                nil
                (om/build-all interval-view
