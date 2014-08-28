@@ -33,6 +33,30 @@
         sec (rem total-sec 60)]
     {:min min :sec sec}))
 
+(defn time-hash
+  "Time in ms as a map"
+  [t]
+  (let [ms        (rem t 1000)
+        total-sec (quot t 1000)
+        s         (rem total-sec 60)
+        total-min (quot total-sec 60)
+        m         (rem total-min 60)
+        h         (quot total-min 60)]
+    {:hours h
+     :minutes m
+     :seconds s
+     :milliseconds ms}))
+
+(defn format-and-pad-time-hash
+  "Take a hash of time components and format it as 'h:mm:ss:mss"
+  [{:keys [hours minutes seconds milliseconds]}]
+  (let [ms-str    (str (if (< milliseconds 10) "0")
+                       (if (< milliseconds 100) "0")
+                       milliseconds)
+        sec-str   (str (if (< seconds 10) "0") seconds)
+        m-str     (str (if (< minutes 10) "0") minutes)]
+    (str t " => " hours ":" m-str ":" sec-str ":" ms-str)))
+
 (defn time-str [{:keys [min sec]}]
   (str min
        ":"
@@ -60,7 +84,7 @@
   (reify
     om/IRender
     (render [_]
-      (dom/li #js {:class "interval"}
+      (dom/li #js {:className "interval"}
         (dom/ul nil
                 (dom/li nil (str (:dist i) " @ " (time-str (split-time (:time i)))))
                 (dom/li nil (str (:state i)))
