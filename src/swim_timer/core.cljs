@@ -68,12 +68,16 @@
 
 (defn start-timer [app]
   (om/update! app :timer-state :running)
+  (om/update! app [:intervals 0 :state] :running)
+  (om/update! app [:intervals 0 :started-at] (js/Date.))
+  (om/update! app [:intervals 0 :finished-at] nil)
   (om/update! app :timer-id (js/setInterval
                                (fn [] (om/transact! app :elapsed-seconds #(inc %)))
                                1000)))
 
 (defn stop-timer [app]
   (om/update! app :timer-state :stopped)
+  (om/update! app [:intervals 0 :finished-at] (js/Date.))
   (js/clearInterval (:timer-id @app))
   (om/update! app :timer-id nil))
 
@@ -91,6 +95,9 @@
         (dom/ul nil
                 (dom/li nil (str dist " @ " (time-str (split-time time))))
                 (dom/li nil (str state))
+                (if (and (#{:running :paused} state)
+                         started-at)
+                  (dom/li nil (str "Running Time: " (time-since-str started-at))))
                 (dom/li nil (str "Start Time: " started-at))
                 (dom/li nil (str "End Time: " finished-at))
                 (if (and started-at finished-at)
