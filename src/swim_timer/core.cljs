@@ -50,12 +50,12 @@
 (defn format-and-pad-time-hash
   "Take a hash of time components and format it as 'h:mm:ss:mss"
   [{:keys [hours minutes seconds milliseconds]}]
-  (let [ms-str    (str (if (< milliseconds 10) "0")
-                       (if (< milliseconds 100) "0")
+  (let [ms-str    (str (if (< milliseconds 10) "0")      ; ghetto zero-padding for seconds
+                       (if (< milliseconds 100) "0")     ; ghetto zero-padding for seconds
                        milliseconds)
-        sec-str   (str (if (< seconds 10) "0") seconds)
-        m-str     (str (if (< minutes 10) "0") minutes)]
-    (str t " => " hours ":" m-str ":" sec-str ":" ms-str)))
+        sec-str   (str (if (< seconds 10) "0") seconds)  ; ghetto zero-padding for seconds
+        m-str     (str (if (< minutes 10) "0") minutes)] ; ghetto zero-padding for seconds
+    (str hours ":" m-str ":" sec-str ":" ms-str)))
 
 (defn time-str [{:keys [min sec]}]
   (str min
@@ -80,16 +80,20 @@
          :timer-id nil
          :timer-state :stopped}))
 
-(defn interval-view [i owner]
+(defn interval-view [{:keys [time dist state started-at finished-at] :as i} owner]
   (reify
     om/IRender
     (render [_]
       (dom/li #js {:className "interval"}
         (dom/ul nil
-                (dom/li nil (str (:dist i) " @ " (time-str (split-time (:time i)))))
-                (dom/li nil (str (:state i)))
-                (dom/li nil (str "Start Time: " (:started-at i)))
-                (dom/li nil (str "End Time: " (:finished-at i))))))))
+                (dom/li nil (str dist " @ " (time-str (split-time time))))
+                (dom/li nil (str state))
+                (dom/li nil (str "Start Time: " started-at))
+                (dom/li nil (str "End Time: " finished-at))
+                (if (and started-at finished-at)
+                  (let [duration (- finished-at started-at)]
+                    (dom/li nil (str "Time: " (format-and-pad-time-hash
+                                                (time-hash duration)))))))))))
 
 (defn create-interval [intervals owner]
   (let [interval-string-el (om/get-node owner "new-interval")
