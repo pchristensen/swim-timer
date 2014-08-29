@@ -50,12 +50,15 @@
 (defn format-and-pad-time-hash
   "Take a hash of time components and format it as 'h:mm:ss:mss"
   [{:keys [hours minutes seconds milliseconds]}]
-  (let [ms-str    (str (if (< milliseconds 10) "0")      ; ghetto zero-padding for seconds
-                       (if (< milliseconds 100) "0")     ; ghetto zero-padding for seconds
-                       milliseconds)
-        sec-str   (str (if (< seconds 10) "0") seconds)  ; ghetto zero-padding for seconds
-        m-str     (str (if (< minutes 10) "0") minutes)] ; ghetto zero-padding for seconds
-    (str hours ":" m-str ":" sec-str ":" ms-str)))
+  (let [sec-tenths (quot milliseconds 100)
+        sec-str    (str (if (< seconds 10) "0") seconds)  ; ghetto zero-padding for seconds
+        m-str      (str (if (< minutes 10) "0") minutes)] ; ghetto zero-padding for seconds
+    (str hours ":" m-str ":" sec-str "." sec-tenths)))
+
+(defn time-since-str
+  "Takes a timestamp, and returns a formatted string of the time since then"
+  ([t] (time-since-str t (js/Date.)))
+  ([t1 t2] (format-and-pad-time-hash (time-hash (- t2 t1)))))
 
 (defn time-str [{:keys [min sec]}]
   (str min
